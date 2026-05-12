@@ -1,11 +1,10 @@
 # Habit Tracker API
 
 **SFWE477 – Backend Development & DevOps Fundamentals**
-**Student:** Selin Türkdoğan — 2103060004
+Selin Türkdoğan — 2103060004
 
 A backend API for a habit tracking application built with FastAPI, PostgreSQL, MongoDB, and Redis.
 
----
 
 ## Project Overview
 
@@ -24,15 +23,6 @@ This API powers a habit tracking app where users can create habits, log daily ch
 | CI | GitHub Actions |
 | Deployment | Render |
 
-## Project Phases
-
-| Phase | Status | Description |
-|---|---|---|
-| Phase 1 – Design | ✅ Complete | ERD, API Contract, DECISIONS.md |
-| Phase 2 – Build | 🔜 Pending approval | FastAPI implementation |
-| Phase 3 – Secure | 🔜 Pending | JWT, rate limiting, validation |
-| Phase 4 – Deploy | 🔜 Pending | Docker Compose, CI/CD, Render |
-
 ## Unique Feature: Streak Freeze & At-Risk Notification
 
 - Each user gets **1 freeze token per week**
@@ -46,8 +36,3 @@ This API powers a habit tracking app where users can create habits, log daily ch
 - [`DECISIONS.md`](DECISIONS.md) — Architecture and logic decisions
 - [`design/erd.png`](design/erd.png) — Entity Relationship Diagram
 
-## Base URL
-
-```
-http://localhost:8000/api/v1
-```
