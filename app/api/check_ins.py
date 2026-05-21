@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.db.postgres import get_session
+from app.db.redis import get_redis
 from app.models import CheckIn, User
 from app.schemas.check_in import CheckInOut
 from app.services.habit_service import get_or_create_streak, get_owned_habit
@@ -41,6 +42,10 @@ async def check_in(
     await apply_check_in(session, habit, streak, today)
     await session.commit()
     await session.refresh(ci)
+    # Invalidate dashboard cache so next GET reflects the new check-in
+    redis = get_redis()
+    async for key in redis.scan_iter(f"dashboard:{current.id}:*"):
+        await redis.delete(key)
     return ci
 
 

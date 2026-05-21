@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.db.postgres import get_session
+from app.db.redis import get_redis
 from app.models import Habit, Streak, User
 from app.schemas.habit import HabitCreate, HabitOut, HabitUpdate, HabitWithStreakOut, StreakOut
 from app.services.habit_service import get_or_create_streak, get_owned_habit
@@ -13,6 +14,15 @@ from app.services.streak_service import compute_streak_at_risk, maybe_reset_week
 from app.services.time_utils import local_date_for
 
 router = APIRouter(prefix="/habits", tags=["habits"])
+
+
+async def _bust_dashboard_cache(user_id) -> None:
+    """Delete any cached dashboard entries for this user (all dates)."""
+    redis = get_redis()
+    pattern = f"dashboard:{user_id}:*"
+    keys = await redis.keys(pattern)
+    if keys:
+        await redis.delete(*keys)
 
 
 def _ensure_custom_days(frequency: str, custom_days: list[int] | None) -> None:
@@ -79,6 +89,7 @@ async def create_habit(
     session.add(Streak(habit_id=habit.id, user_id=current.id))
     await session.commit()
     await session.refresh(habit)
+    await _bust_dashboard_cache(current.id)
     return habit
 
 
@@ -115,6 +126,7 @@ async def update_habit(
         setattr(habit, k, v)
     await session.commit()
     await session.refresh(habit)
+    await _bust_dashboard_cache(current.id)
     return habit
 
 
@@ -127,4 +139,5 @@ async def delete_habit(
     habit = await get_owned_habit(session, habit_id, current.id)
     habit.is_active = False
     await session.commit()
+    await _bust_dashboard_cache(current.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
