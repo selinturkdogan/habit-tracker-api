@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlalchemy import text
 
+from app.api.auth import router as auth_router
 from app.db.mongo import close_mongo, get_mongo, init_mongo
 from app.db.postgres import dispose_engine, init_engine
 from app.db.redis import close_redis, get_redis, init_redis
@@ -25,6 +26,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.include_router(auth_router, prefix="/api/v1")
 
 
 @app.get("/health")

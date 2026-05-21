@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     # App
     app_env: str = Field(default="development")
 
+    # Auth (Phase 3 will harden — proper secret rotation, refresh tokens, rate limit)
+    jwt_secret: str = Field(default="dev-secret-change-me")
+    jwt_algorithm: str = Field(default="HS256")
+    jwt_expires_minutes: int = Field(default=60 * 24 * 7)  # 7 days
+
     @property
     def postgres_dsn(self) -> str:
         return (
