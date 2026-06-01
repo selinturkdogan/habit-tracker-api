@@ -57,6 +57,33 @@ Recalculating streaks by scanning all `check_ins` rows every time would get slow
 
 ---
 
+## Two-Factor Authentication
+
+### Why TOTP over SMS-based OTP?
+
+I chose TOTP (Time-Based One-Time Password) over SMS for three reasons:
+
+1. **Cost** — SMS-based OTP requires a third-party provider (Twilio, AWS SNS) with per-message fees. TOTP is entirely free; the shared secret is established once at setup and all future code generation happens locally on the user's device and server.
+2. **SIM-swapping attacks** — SMS OTP is vulnerable to SIM-swapping, where an attacker convinces the carrier to transfer the victim's phone number to a new SIM. TOTP is immune because the secret is tied to the authenticator app, not a phone number.
+3. **No phone number required** — Users don't have to hand over their phone number. This is better for privacy and for users who may not have a mobile number.
+
+### How I store the TOTP secret
+
+The `otp_secret` field in the `users` table stores the Base32-encoded secret as plaintext. For a Phase 2 academic project this is acceptable, but in production I would encrypt it at rest using AES-256 (with the key stored in an environment variable or a secrets manager like AWS Secrets Manager). The tradeoff is implementation complexity vs. security depth — the secret is already protected by the application-layer authentication, but encrypting it adds defence-in-depth against a direct database dump.
+
+### What happens if a user loses their phone?
+
+In the current implementation, losing access to the authenticator app means the user is locked out of their account if 2FA is active. In a production version I would implement:
+
+- **Backup codes** — generate 8–10 single-use recovery codes at setup time (hashed in the DB), displayed once to the user. Any one code can be used instead of the TOTP code to log in and then disable 2FA.
+- **Admin reset endpoint** — an authenticated admin endpoint that can clear `otp_enabled` after identity verification through another channel (e.g. email confirmation link).
+
+### What is `valid_window=1` in pyotp?
+
+TOTP codes are valid for 30-second windows. `valid_window=1` means pyotp accepts codes from the **previous** and **next** 30-second window in addition to the current one — a total window of 90 seconds. This is necessary because the user's phone clock and the server clock may not be perfectly synchronised. Without this tolerance, a user whose phone is even a few seconds behind would be rejected on every login attempt. Most production TOTP implementations use `valid_window=1` as the standard value.
+
+---
+
 ## Unique Constraint on check_ins
 
 ```sql
