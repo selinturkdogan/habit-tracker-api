@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, text
+from sqlalchemy import Boolean, String, text
 from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -22,3 +22,8 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), server_default=text("now()"), nullable=False
     )
+
+    # Two-Factor Authentication (TOTP)
+    otp_secret: Mapped[str | None] = mapped_column(String(64), nullable=True, default=None)
+    otp_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    otp_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
