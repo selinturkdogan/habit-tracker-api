@@ -23,7 +23,9 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-habit}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-habit}
     ports:
-      - "27017:27017"
+      # Host port 27018 to avoid clashing with a native Windows MongoDB
+      # service on 27017. Container still listens on 27017 internally.
+      - "27018:27017"
     volumes:
       - mongo_data:/data/db
     healthcheck:
