@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-migrate:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: habit
+          POSTGRES_PASSWORD: habit
+          POSTGRES_DB: habit_tracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U habit -d habit_tracker"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: Lint with ruff
+        run: ruff check app
+        continue-on-error: true
+
+      - name: Run Alembic migrations
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: habit
+          POSTGRES_PASSWORD: habit
+          POSTGRES_DB: habit_tracker
+        run: alembic upgrade head
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t habit-tracker-api:ci .
