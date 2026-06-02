@@ -1,4 +1,25 @@
 services:
+  api:
+    build: .
+    container_name: habit-api
+    env_file:
+      - .env
+    environment:
+      # Override hosts to use Docker service names (not localhost)
+      POSTGRES_HOST: postgres
+      MONGO_HOST: mongo
+      MONGO_PORT: 27017
+      REDIS_HOST: redis
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+        
   postgres:
     image: postgres:16-alpine
     container_name: habit-postgres
